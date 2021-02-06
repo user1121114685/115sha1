@@ -6,18 +6,18 @@
 
 本项目只是 fake115-go 的GUI包装，核心功能由fake115-go实现，对大佬进行感谢！
 
-当你无法导入 或则导出异常的时候。请下载 https://github.com/gawwo/fake115-go/releases/latest 最新版替换。如还是不行请在该项目反馈。
+当你无法导入 或则导出异常的时候。请下载 https://github.com/gawwo/fake115-go/releases/latest 最新版 fake115.exe 替换。如还是不行请在该项目反馈。
 
 
 
 ## 使用方法
 
 **需要Chrome**    
-下载地址：https://github.com/user1121114685/Wallpaper_Engine/raw/main/115sha1_64位.zip    
+下载地址：https://github.com/user1121114685/115sha1/raw/main/115sha1_64%E4%BD%8D.zip    
 使用简单方便，就不需要说明了，如果你想让该项目持续健康的发展请对我的付出进行捐赠。 
 
 ## 特别感谢
-https://github.com/gawwo/fake115-go/releases/latest
+https://github.com/gawwo/fake115-go
 https://github.com/getbuguai/gaihosts
 ---
 ## 如果对你有所帮助，也可以对我进行捐赠。那撒我也不废话，下面是二维码。
