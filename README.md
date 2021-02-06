@@ -1,1 +1,35 @@
 # 115sha1
+便捷的115sha1导入/导出功能。方便分享。
+## 开源说明
+
+本项目旨在练习golang 和减少劳动力。    
+
+本项目只是 fake115-go 的GUI包装，核心功能由fake115-go实现，对大佬进行感谢！
+
+当你无法导入 或则导出异常的时候。请下载 https://github.com/gawwo/fake115-go/releases/latest 最新版替换。如还是不行请在该项目反馈。
+
+
+
+## 使用方法
+
+**需要Chrome**    
+下载地址：https://github.com/user1121114685/Wallpaper_Engine/raw/main/115sha1_64位.zip    
+使用简单方便，就不需要说明了，如果你想让该项目持续健康的发展请对我的付出进行捐赠。 
+
+## 特别感谢
+https://github.com/gawwo/fake115-go/releases/latest
+https://github.com/getbuguai/gaihosts
+---
+## 如果对你有所帮助，也可以对我进行捐赠。那撒我也不废话，下面是二维码。
+![微信](https://gitee.com/shaoxia1991/Blog/raw/master/me/%E5%BE%AE%E4%BF%A1%E6%94%B6%E6%AC%BE.png)  
+
+![支付宝](https://gitee.com/shaoxia1991/Blog/raw/master/me/%E6%94%AF%E4%BB%98%E5%AE%9D%E6%94%B6%E6%AC%BE.jpg)  
+
+---
+## 编译 
+<!-- `go env -w GOARCH=386` -->
+`go build  -ldflags="-s -w -H windowsgui" main.go`
+
+## License
+
+[The MIT License (MIT)](https://raw.githubusercontent.com/user1121114685/115sha1/master/LICENSE)
