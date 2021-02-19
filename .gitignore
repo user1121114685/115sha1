@@ -2,3 +2,6 @@
 __debug_bin
 *.log
 main.exe
+*.json
+已导入sha1.txt
+*.gz

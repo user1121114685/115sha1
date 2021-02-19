@@ -1,0 +1,33 @@
+1 VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEOS 0x40004
+FILETYPE 0x1
+{
+BLOCK "StringFileInfo"
+{
+    BLOCK "040904B0"
+    {
+        VALUE "CompanyName", "ShaoXia"
+        VALUE "FileDescription", "Convenient, safe and open source SHA1 import / export tool for 115 network disk"
+        VALUE "FileVersion", "1.0.0.0"
+        VALUE "InternalName", "115sha1 import / export tool"
+        VALUE "LegalCopyright", "Copyright (C)2021 ShaoXia.xyz. All rights reserved."
+        VALUE "OriginalFilename", "115sha1.exe"
+        VALUE "ProductName", "115sha1 import / export tool"
+        VALUE "ProductVersion", "1.0.0.0"
+    }
+}
+
+
+
+
+BLOCK "VarFileInfo"
+{
+    VALUE "Translation", 0X0409, 0X04B0
+}
+}
+
+
+
+IDI_ICON1 ICON "Logo.ico"

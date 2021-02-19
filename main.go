@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -10,7 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -24,10 +24,18 @@ import (
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 	"github.com/flopp/go-findfont"
+	"github.com/gawwo/fake115-go/config"
+	"github.com/gawwo/fake115-go/core"
+	"github.com/gogf/gf/text/gregex"
+
+	//"github.com/gawwo/fake115-go/log"
+	"crypto/sha1"
+
 	"github.com/tidwall/gjson"
 )
 
 func init() {
+
 	//获取中文字体列表
 	fontPaths := findfont.List()
 	for _, path := range fontPaths {
@@ -39,11 +47,15 @@ func init() {
 	}
 }
 
+var Version = ""
+
 var MyFolderChoose string             // 最终选择的目录
+var MyFolderChooseName string         // 最终选择的目录
 var JsonData string                   //JSON 目录
 var CooKie_115 string                 //115 Cookie
 var ChooseFolder_115 []string         //115 文件目录
 var ChooseFolderMap map[string]string /*创建集合 */
+var NewVersion string
 
 func getcookie() {
 	dir, err := ioutil.TempDir("", "chromedp-example")
@@ -61,13 +73,47 @@ func getcookie() {
 		chromedp.UserDataDir(dir),
 	)
 
-	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
-	defer cancel()
+	allocCtx, _ := chromedp.NewExecAllocator(context.Background(), opts...)
+	//defer cancel()
 
 	// also set up a custom logger
-	taskCtx, cancel := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
-	defer cancel()
+	taskCtx, _ := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
+	//defer cancel()
+	chromedp.ListenTarget(taskCtx, func(ev interface{}) {
+		switch ev := ev.(type) {
 
+		case *network.EventResponseReceived:
+			resp := ev.Response
+			if len(resp.Headers) != 0 {
+				// log.Printf("received headers: %s", resp.Headers)
+				//https://115.com/?cid=0&offset=0&tab=&mode=wangpan
+				//https://115.com/?cid=    &offset=0&mode=wangpan
+				// https://webapi.115.com/files?aid=1&cid=   &o=user_ptime&asc=0&offset=0&show_dir=1&limit=40&code=&scid=&snap=0&natsort=1&record_open_time=1&source=&format=json&type=&star=&is_share=&suffix=&custom_order=&fc_mix=
+				if strings.Index(resp.URL, "https://115.com/?cid=") != -1 {
+					fmt.Println("找到API啦！！  " + resp.URL)
+
+					respURL, err := gregex.MatchString(`cid=\d+`, resp.URL)
+					respCid, err := gregex.MatchString(`\d+`, respURL[0])
+					if err == nil {
+						MyFolderChoose = respCid[0]
+						// document.querySelector("#js_top_header_file_path_box > div.top-file-path > div")
+						choose115FolderName()
+						fmt.Println("选择了   " + MyFolderChooseName + MyFolderChoose)
+						//choose115FolderName()
+
+					} else {
+						fmt.Println("API 提取错误。。 请GitHub联系 " + resp.URL)
+
+						var exitScan string
+						_, _ = fmt.Scan(&exitScan)
+					}
+
+				}
+			}
+
+		}
+		// other needed network Event
+	})
 	chromedp.Run(taskCtx,
 		network.Enable(),
 		chromedp.Navigate(`https://115.com/`),
@@ -91,14 +137,19 @@ func getcookie() {
 
 			return nil
 		}),
+		chromedp.Navigate(`https://115.com/`),
 	)
-	choose115Folder()
+
+	//choose115Folder()
+
 }
 
-func choose115Folder() {
+func choose115FolderName() {
 	ChooseFolderMap = make(map[string]string)
 	client := &http.Client{}
-	reqest, err := http.NewRequest("GET", "https://webapi.115.com/files?aid=1&cid=0&o=user_ptime&asc=0&offset=0&show_dir=1&limit=56&code=&scid=&snap=0&natsort=1&record_open_time=1&source=&format=json", nil) //建立一个请求
+	urlstring := "https://webapi.115.com/files?aid=1&cid=" + MyFolderChoose + "&o=user_ptime&asc=0&offset=0&show_dir=1&limit=40&code=&scid=&snap=0&natsort=1&record_open_time=1&source=&format=json"
+	// https://webapi.115.com/files?aid=1&cid=    &o=user_ptime&asc=0&offset=0&show_dir=1&limit=40&code=&scid=&snap=0&natsort=1&record_open_time=1&source=&format=json
+	reqest, err := http.NewRequest("GET", urlstring, nil) //建立一个请求
 	if err != nil {
 		fmt.Println("Fatal error ", err.Error())
 		os.Exit(0)
@@ -120,27 +171,28 @@ func choose115Folder() {
 	//gjson.GetMany(string(body))
 	//gjson.Parse(json).Get("name").Get("last")
 	//gjson.Get(string(body), "data.data.cid").Get("ns")
-	result := gjson.Get(string(body), "data.#.cid")
-	for _, cidname := range result.Array() {
-		println(cidname.String())
-		if cidname.String() != "0" {
-			nameStr := "data.#(" + "cid=\"" + cidname.String() + "\").ns"
-			// name := gjson.Get(json, `programmers.#(lastName="Hunter").firstName`)
-			filename := gjson.Get(string(body), nameStr)
-			ChooseFolderMap[filename.String()] = cidname.String() // 将结果存入数组
-			println(filename.String())
-			// prints "Elliotte"
-			ChooseFolder_115 = append(ChooseFolder_115, filename.String()) //将 名字保存到数组
-		}
+	result := gjson.Get(string(body), "path.#.name")
+	MyFolderChooseName = "\r\n"
+	for _, pathname := range result.Array() {
+		println(pathname.String())
+		MyFolderChooseName = MyFolderChooseName + "/" + pathname.String()
+
 	}
+	MyFolderChooseName = MyFolderChooseName + "\r\n"
 
 }
+
 func inputBoxChoose() {
 
 	fdw := fyne.CurrentApp().NewWindow("导入功能")
 	//	窗口大小
-	fdw.Resize(fyne.NewSize(800, 800))
+	fdw.Resize(fyne.NewSize(800, 400))
+	//selectEntry := widget.NewSelectEntry(ChooseFolder_115)
+	//selectEntry.PlaceHolder = "请输入CID或者选择文件夹"
 	fdw.SetContent(container.NewVBox(
+		// 选择需要导入的目录
+		widget.NewLabel("选择导入目录请在Chrome浏览器上进行\r\n按f5刷新，确认导入目录"),
+
 		//content := fdw.SetContent(container.NewVBox(
 		widget.NewButton("选择需要导入的Json文件", func() {
 
@@ -156,21 +208,14 @@ func inputBoxChoose() {
 				JsonData = reader.URI().Path()
 				//imageOpened(reader)
 			}, fdw)
-			fd.Resize(fyne.NewSize(800, 800))
+			fd.Resize(fyne.NewSize(800, 400))
 
-			fd.SetFilter(storage.NewExtensionFileFilter([]string{".json", ".jpg", ".jpeg"}))
+			fd.SetFilter(storage.NewExtensionFileFilter([]string{".json", ".txt"}))
 
 			fd.Show()
 
 		}),
 
-		// 选择需要导入的目录
-		widget.NewLabel("选择你需要导入的目录"),
-		widget.NewSelect(ChooseFolder_115, func(s string) {
-
-			fmt.Println("selected", s, "CID是", ChooseFolderMap[s])
-			MyFolderChoose = ChooseFolderMap[s]
-		}),
 		//开始导入
 		widget.NewButton("开始导入", func() {
 			if JsonData == "" {
@@ -180,10 +225,80 @@ func inputBoxChoose() {
 				err := errors.New("请先选择 需要导入到115的目录")
 				dialog.ShowError(err, fdw)
 			} else {
-				dir, _ := os.Getwd()
-				//dir = strings.Replace(dir, "\\", "\\\\", -1)
-				//JsonData = strings.Replace(JsonData, "\\", "\\\\", -1)
-				exec.Command("cmd", "/c", "start cmd /k"+dir+"\\fake115.exe -c \""+CooKie_115+"\" "+MyFolderChoose+" "+JsonData).Run()
+
+				_, err := os.Stat("./已导入sha1.txt") //os.Stat获取文件信息
+				if err != nil {
+					ioutil.WriteFile("./已导入sha1.txt", nil, 0777)
+				}
+				file, err := os.Open("./已导入sha1.txt")
+
+				if err != nil {
+					println(err.Error())
+
+				}
+				defer file.Close()
+				// 计算导入文件的sha1
+				f, err := os.Open(JsonData)
+				if err != nil {
+					log.Fatal(err)
+				}
+				defer f.Close()
+				h1 := sha1.New()
+				if _, err := io.Copy(h1, f); err != nil {
+					log.Fatal(err)
+				}
+
+				ScannerSha1 := bufio.NewScanner(file)
+				var WriteToSha1 bool
+				WriteToSha1 = true
+				for ScannerSha1.Scan() {
+
+					sha1s := ScannerSha1.Text()
+					if fmt.Sprintf("%x", h1.Sum(nil)) == sha1s {
+
+						WriteToSha1 = false
+					}
+
+				}
+				// dir, _ := os.Getwd()
+
+				//exec.Command("cmd", "/c", "start cmd /k"+dir+"\\fake115.exe -c \""+CooKie_115+"\" "+MyFolderChoose+" "+JsonData).Run()
+
+				//go core.Import(MyFolderChoose, JsonData)
+
+				cnf := dialog.NewConfirm(JsonData, "确定导入到  "+MyFolderChooseName+"CID是 "+MyFolderChoose, func(s bool) {
+
+					if s == true {
+						go core.Import(MyFolderChoose, JsonData)
+
+						if WriteToSha1 != false {
+							file, err := os.OpenFile("./已导入sha1.txt", os.O_APPEND, 0777)
+							defer file.Close()
+
+							if err != nil {
+								println(err.Error())
+
+							}
+							write := bufio.NewWriter(file)
+
+							write.WriteString(fmt.Sprintf("%x\r\n", h1.Sum(nil)))
+
+							//Flush将缓存的文件真正写入到文件中
+							write.Flush()
+							file.Sync()
+							fmt.Println(fmt.Sprintf("%x\r\n", h1.Sum(nil)))
+
+						}
+
+					}
+				}, fdw)
+				cnf.SetDismissText("不")
+				cnf.SetConfirmText("确定")
+				cnf.Show()
+				if WriteToSha1 == false {
+
+					dialog.ShowInformation("发现该文件已导入", "请注意是否需要重复导入 "+JsonData, fdw)
+				}
 			}
 
 		}),
@@ -195,27 +310,32 @@ func inputBoxChoose() {
 
 func outputBoxChoose() {
 
-	fdw := fyne.CurrentApp().NewWindow("导入功能")
+	fdw := fyne.CurrentApp().NewWindow("导出功能")
+
 	//	窗口大小
-	fdw.Resize(fyne.NewSize(800, 800))
+	fdw.Resize(fyne.NewSize(800, 400))
 	fdw.SetContent(container.NewVBox(
 
 		// 选择需要导入的目录
-		widget.NewLabel("选择你需要导出的目录"),
-		widget.NewSelect(ChooseFolder_115, func(s string) {
+		widget.NewLabel("选择导出目录请在Chrome浏览器上进行\r\n按f5刷新，确认导出目录"),
 
-			fmt.Println("selected", s, "CID是", ChooseFolderMap[s])
-			MyFolderChoose = ChooseFolderMap[s]
-		}),
 		//开始导入
 		widget.NewButton("开始导出", func() {
 			if MyFolderChoose == "" {
 				err := errors.New("请先选择 需要导出的115目录")
 				dialog.ShowError(err, fdw)
 			} else {
-				dir, _ := os.Getwd()
+				//dir, _ := os.Getwd()
+				cnf := dialog.NewConfirm("导出文件夹确认", "确定导出  "+MyFolderChooseName+"CID是 "+MyFolderChoose, func(s bool) {
+					if s == true {
+						go core.Export(MyFolderChoose)
+					}
+				}, fdw)
+				cnf.SetDismissText("不")
+				cnf.SetConfirmText("确定")
+				cnf.Show()
+				//exec.Command("cmd", "/c", "start cmd /k"+dir+"\\fake115.exe -c \""+CooKie_115+"\" "+MyFolderChoose).Run()
 
-				exec.Command("cmd", "/c", "start cmd /k"+dir+"\\fake115.exe -c \""+CooKie_115+"\" "+MyFolderChoose).Run()
 			}
 
 		}),
@@ -233,8 +353,9 @@ func parseURL(urlStr string) *url.URL {
 
 	return link
 }
+
 func QRcode() {
-	fdw := fyne.CurrentApp().NewWindow("我不信真的有人会捐赠")
+	fdw := fyne.CurrentApp().NewWindow("给开源一份阳光")
 	//	窗口大小
 	//fdw.Resize(fyne.NewSize(800, 800))  storage.NewURI("https://gitee.com/shaoxia1991/Blog/raw/master/me/%E6%94%AF%E4%BB%98%E5%AE%9D%E6%94%B6%E6%AC%BE.jpg")
 	//
@@ -269,20 +390,54 @@ func QRcode() {
 	fdw.Show()
 }
 
+func checkNewVersion() {
+	//https://shaoxia1991.coding.net/p/115sha1/d/115sha1/git/raw/main/
+	//https://raw.githubusercontent.com/user1121114685/115sha1/main/main.go
+	newVersion, err := http.Get("https://shaoxia1991.coding.net/p/115sha1/d/115sha1/git/raw/main/version.txt?download=true")
+
+	if err != nil {
+		fmt.Println("获取新版本失败  ....")
+		// handle error
+	}
+	defer newVersion.Body.Close()
+	body, err := ioutil.ReadAll(newVersion.Body)
+	if err != nil {
+		fmt.Println("获取新版本失败  ....")
+		// handle error
+	}
+	fmt.Println(string(body)) //网页源码
+	NewVersion = string(body)
+}
+
+func fake115(w fyne.Window) {
+	config.Cookie = CooKie_115
+	//config.WorkerNum = 10
+	// 确保cookie在登录状态
+	loggedIn := core.SetUserInfoConfig()
+	if !loggedIn {
+		fmt.Println("Login expire or fail...")
+		err := errors.New("登陆失效，或者登陆失败")
+		dialog.ShowError(err, w)
+		os.Exit(1)
+	}
+
+}
 func main() {
 
+	checkNewVersion()
 	a := app.New()
 	w := a.NewWindow("115 Sha1备份/恢复 by 联盟少侠")
 	//	窗口大小
-	w.Resize(fyne.NewSize(200, 800))
+	w.Resize(fyne.NewSize(200, 600))
 
 	hello := widget.NewLabel("这是我的第一个GUI程序，运行本程序需要安装Chrome")
+
 	// 第一个按钮
 	w.SetContent(container.NewVBox(
 		hello,
 		widget.NewLabel(""),
-		widget.NewLabel("版本号 2021年2月6日16:04:35"),
-		widget.NewLabel(""),
+		// widget.NewLabel("版本号 2021年2月6日16:04:35"),
+		// widget.NewLabel(""),
 		widget.NewButton("1.登陆", func() {
 			if CooKie_115 != "" {
 				err := errors.New("你已经登陆了！！！  再次登陆是为了锻炼身体吗？")
@@ -297,29 +452,45 @@ func main() {
 				err := errors.New("你还没登陆，我猜你不知道需要先登陆")
 				dialog.ShowError(err, w)
 			} else {
+				fake115(w)
 				outputBoxChoose()
 			}
 
 		}),
-
+		widget.NewLabel("导入1次后崩溃，请重新打开软件，下版本修复"),
 		widget.NewButton("3.导入", func() {
 			if CooKie_115 == "" {
 				err := errors.New("你还没登陆，我猜你不知道需要先登陆")
 				dialog.ShowError(err, w)
 			} else {
+				fake115(w)
 				inputBoxChoose()
 			}
 		}),
 
 		container.NewHBox(
-			widget.NewLabel("地址"),
-			widget.NewHyperlink("shaoxia.xyz", parseURL("https://shaoxia.xyz/")),
-			widget.NewLabel("|"),
-			widget.NewHyperlink("115sha1界面", parseURL("https://github.com/user1121114685/115sha1")),
-			widget.NewLabel("|"),
-			widget.NewHyperlink("115sha1核心", parseURL("https://github.com/gawwo/fake115-go/releases/latest")),
+			widget.NewLabel("项目地址:"),
+			widget.NewHyperlink("115sha1", parseURL("https://github.com/user1121114685/115sha1")),
+			widget.NewLabel(" "),
+			widget.NewHyperlink("fake115", parseURL("https://github.com/gawwo/fake115-go/releases/latest")),
 		),
-		widget.NewButton("没有意义的功能", func() { QRcode() }),
+		container.NewHBox(
+			widget.NewLabel("作者博客:"),
+			widget.NewHyperlink("shaoxia.xyz", parseURL("https://shaoxia.xyz/")),
+			widget.NewLabel(" "),
+			widget.NewHyperlink("TG分享交流群", parseURL("https://t.me/Resources115")),
+		),
+		container.NewHBox(
+			widget.NewLabel("当前版本:"+Version),
+		),
+		container.NewHBox(
+			widget.NewLabel("最新版本:"),
+			widget.NewHyperlink(NewVersion, parseURL("https://shaoxia1991.coding.net/p/115sha1/d/115sha1/git/raw/main/115sha1_64%E4%BD%8D.zip")),
+		),
+		widget.NewButton("115SHA1加油", func() { QRcode() }),
+
+		//widget.NewButton("合二为一的版本", func() { fake115(w) }),
+
 	))
 
 	//w.ShowAndRun()
@@ -328,3 +499,5 @@ func main() {
 	w.ShowAndRun()
 	os.Unsetenv("FYNE_FONT")
 }
+
+// 选择文件不好用，那就拖动输入
