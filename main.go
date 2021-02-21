@@ -194,7 +194,7 @@ func inputBoxChoose() {
 		widget.NewLabel("选择导入目录请在Chrome浏览器上进行\r\n按f5刷新，确认导入目录"),
 
 		//content := fdw.SetContent(container.NewVBox(
-		widget.NewButton("选择需要导入的Json文件", func() {
+		widget.NewButton("选择需要导入的Json文件或者TXT文件", func() {
 
 			fd := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 				if err == nil && reader == nil {
@@ -215,14 +215,15 @@ func inputBoxChoose() {
 			fd.Show()
 
 		}),
-
+		widget.NewLabel("导入1次后崩溃，请重新打开软件，下版本修复"),
+		widget.NewLabel("导入1次后崩溃，请重新打开软件，下版本修复"),
 		//开始导入
 		widget.NewButton("开始导入", func() {
 			if JsonData == "" {
 				err := errors.New("请先选择 需要导入的Json文件")
 				dialog.ShowError(err, fdw)
 			} else if MyFolderChoose == "" {
-				err := errors.New("请先选择 需要导入到115的目录")
+				err := errors.New("请在Chrome 中选择导入到115的目录，按刷新(F5)")
 				dialog.ShowError(err, fdw)
 			} else {
 
@@ -322,7 +323,7 @@ func outputBoxChoose() {
 		//开始导入
 		widget.NewButton("开始导出", func() {
 			if MyFolderChoose == "" {
-				err := errors.New("请先选择 需要导出的115目录")
+				err := errors.New("请在Chrome 中选择导出到115的目录，按刷新(F5)")
 				dialog.ShowError(err, fdw)
 			} else {
 				//dir, _ := os.Getwd()
@@ -430,12 +431,12 @@ func main() {
 	//	窗口大小
 	w.Resize(fyne.NewSize(200, 600))
 
-	hello := widget.NewLabel("这是我的第一个GUI程序，运行本程序需要安装Chrome")
+	hello := widget.NewLabel("   这是我的第一个GUI程序\r\n   运行本程序需要安装Chrome")
 
 	// 第一个按钮
 	w.SetContent(container.NewVBox(
 		hello,
-		widget.NewLabel(""),
+		
 		// widget.NewLabel("版本号 2021年2月6日16:04:35"),
 		// widget.NewLabel(""),
 		widget.NewButton("1.登陆", func() {
@@ -457,7 +458,7 @@ func main() {
 			}
 
 		}),
-		widget.NewLabel("导入1次后崩溃，请重新打开软件，下版本修复"),
+		
 		widget.NewButton("3.导入", func() {
 			if CooKie_115 == "" {
 				err := errors.New("你还没登陆，我猜你不知道需要先登陆")

@@ -3,7 +3,7 @@ echo %buildtime%>./version.txt
 
 go build -ldflags "-X main.Version=%buildtime%"
 
-
+del 115sha1_64λ.zip
 zip -q 115sha1_64λ.zip 115sha1.exe
 del 115sha1.exe
 rmdir /s/q logs
