@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"unicode/utf8"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -49,16 +50,27 @@ func init() {
 
 var Version = ""
 
-var MyFolderChoose string             // 最终选择的目录
-var MyFolderChooseName string         // 最终选择的目录
-var JsonData string                   //JSON 目录
-var CooKie_115 string                 //115 Cookie
-var ChooseFolder_115 []string         //115 文件目录
-var ChooseFolderMap map[string]string /*创建集合 */
-var NewVersion string
+var MyFolderChoose string     // 最终选择的目录
+var MyFolderChooseName string // 最终选择的目录
+var JsonData string           //JSON 目录
+var CooKie_115 string         //115 Cookie
+var ChooseFolder_115 []string //115 文件目录
+
+var NewVersion string //新版本提示
 
 func getcookie() {
-	dir, err := ioutil.TempDir("", "chromedp-example")
+	// 尝试从本地cookie登录
+	_, err := os.Stat("./cookies.txt") //os.Stat获取文件信息
+	if err == nil {
+
+		coo, err := ioutil.ReadFile("./cookies.txt")
+		if err != nil {
+			fmt.Println("读取cookies失败")
+
+		}
+		CooKie_115 = string(coo)
+	}
+	dir, err := ioutil.TempDir("", "115sha1")
 	if err != nil {
 		panic(err)
 	}
@@ -90,7 +102,7 @@ func getcookie() {
 				//https://115.com/?cid=    &offset=0&mode=wangpan
 				// https://webapi.115.com/files?aid=1&cid=   &o=user_ptime&asc=0&offset=0&show_dir=1&limit=40&code=&scid=&snap=0&natsort=1&record_open_time=1&source=&format=json&type=&star=&is_share=&suffix=&custom_order=&fc_mix=
 				if strings.Index(resp.URL, "https://115.com/?cid=") != -1 {
-					fmt.Println("找到API啦！！  " + resp.URL)
+					fmt.Println("找到CID啦！！  " + resp.URL)
 
 					respURL, err := gregex.MatchString(`cid=\d+`, resp.URL)
 					respCid, err := gregex.MatchString(`\d+`, respURL[0])
@@ -102,7 +114,7 @@ func getcookie() {
 						//choose115FolderName()
 
 					} else {
-						fmt.Println("API 提取错误。。 请GitHub联系 " + resp.URL)
+						fmt.Println("CID 提取错误。。 请GitHub联系 " + resp.URL)
 
 						var exitScan string
 						_, _ = fmt.Scan(&exitScan)
@@ -116,24 +128,40 @@ func getcookie() {
 	})
 	chromedp.Run(taskCtx,
 		network.Enable(),
-		chromedp.Navigate(`https://115.com/`),
-		chromedp.WaitVisible(`#js-main_leftUI`, chromedp.BySearch),
-		chromedp.Navigate(`https://webapi.115.com/history/receive_list`),
+		// 尝试加载cookies
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			cookies, err := network.GetCookies().Do(ctx)
+			if CooKie_115 != "" {
+				cooArr := strings.Split(CooKie_115, ";")
+				for _, v := range cooArr {
+					//expr := cdp.TimeSinceEpoch(time.Now().Add(14 * 24 * time.Hour))
+					cooArrOfOne := strings.Split(v, "=")
+					if len(cooArrOfOne) > 1 { // 当切片长度大于1 也就是两个的时候 才执行 避免崩溃
+						network.SetCookie(cooArrOfOne[0], cooArrOfOne[1]).WithDomain(".115.com").WithHTTPOnly(false).Do(ctx)
+					}
+
+				}
+				return err
+			}
+			//chromedp.Navigate(`https://115.com/`)
+			return nil
+		}),
+
+		chromedp.Navigate(`https://115.com/`),
+
+		chromedp.WaitVisible(`#js-top_search_text`, chromedp.ByID), //等待顶部搜索框加载完毕
+		chromedp.Navigate(`https://webapi.115.com/history/receive_list`),
+		chromedp.ActionFunc(func(taskCtx context.Context) error {
+			cookies, err := network.GetCookies().Do(taskCtx)
 			if err != nil {
 				return err
 			}
-
-			//var coo string
-			for _, v := range cookies {
-				CooKie_115 = CooKie_115 + v.Name + "=" + v.Value + ";"
+			if CooKie_115 == "" { // 当没有cookie的时候才写入。已有Cookie就不管
+				for _, v := range cookies {
+					CooKie_115 = CooKie_115 + v.Name + "=" + v.Value + ";"
+				}
+				// // 保存到文件 方便下次调用，也可以给fake115-go 用 也可以自己输入。避免挤掉已登录的设备
+				ioutil.WriteFile(`./cookies.txt`, []byte(CooKie_115), 0775)
 			}
-			// // 将保存的字符串转换为字节流
-			// str := []byte(coo)
-
-			// // 保存到文件
-			// ioutil.WriteFile(`cookies.txt`, str, 0775)
 
 			return nil
 		}),
@@ -145,7 +173,7 @@ func getcookie() {
 }
 
 func choose115FolderName() {
-	ChooseFolderMap = make(map[string]string)
+
 	client := &http.Client{}
 	urlstring := "https://webapi.115.com/files?aid=1&cid=" + MyFolderChoose + "&o=user_ptime&asc=0&offset=0&show_dir=1&limit=40&code=&scid=&snap=0&natsort=1&record_open_time=1&source=&format=json"
 	// https://webapi.115.com/files?aid=1&cid=    &o=user_ptime&asc=0&offset=0&show_dir=1&limit=40&code=&scid=&snap=0&natsort=1&record_open_time=1&source=&format=json
@@ -248,6 +276,18 @@ func inputBoxChoose() {
 				if _, err := io.Copy(h1, f); err != nil {
 					log.Fatal(err)
 				}
+				// 判断导入文件是否为UTF-8编码
+				var IsUtf8 bool
+
+				jsonBytes, err := ioutil.ReadFile(JsonData)
+				if err != nil {
+
+					fmt.Println("读取导入文件错误")
+
+				} else {
+					//IsUtf8 = utf8.ValidString(string(metaBytes))
+					IsUtf8 = utf8.Valid(jsonBytes)
+				}
 
 				ScannerSha1 := bufio.NewScanner(file)
 				var WriteToSha1 bool
@@ -299,6 +339,9 @@ func inputBoxChoose() {
 				if WriteToSha1 == false {
 
 					dialog.ShowInformation("发现该文件已导入", "请注意是否需要重复导入 "+JsonData, fdw)
+				}
+				if IsUtf8 == false {
+					dialog.ShowInformation(JsonData, "此文件文件并非UTF-8编码\r\n导入将出现文件名乱码\r\n\r\n请用  记事本\r\n另存为  UTF-8编码", fdw)
 				}
 			}
 
@@ -406,7 +449,7 @@ func checkNewVersion() {
 		fmt.Println("获取新版本失败  ....")
 		// handle error
 	}
-	fmt.Println(string(body)) //网页源码
+	fmt.Println("最新版本为 " + string(body)) //网页源码
 	NewVersion = string(body)
 }
 
@@ -436,17 +479,17 @@ func main() {
 	// 第一个按钮
 	w.SetContent(container.NewVBox(
 		hello,
-		
+
 		// widget.NewLabel("版本号 2021年2月6日16:04:35"),
 		// widget.NewLabel(""),
 		widget.NewButton("1.登陆", func() {
-			if CooKie_115 != "" {
-				err := errors.New("你已经登陆了！！！  再次登陆是为了锻炼身体吗？")
-				dialog.ShowError(err, w)
-			} else {
-				getcookie()
-			}
-
+			// if CooKie_115 != "" {
+			// 	err := errors.New("你已经登陆了！！！ \r\n 再次登陆是为了锻炼身体吗？")
+			// 	dialog.ShowError(err, w)
+			// } else {
+			// 	getcookie()
+			// }
+			getcookie()
 		}),
 		widget.NewButton("2.导出", func() {
 			if CooKie_115 == "" {
@@ -458,7 +501,7 @@ func main() {
 			}
 
 		}),
-		
+
 		widget.NewButton("3.导入", func() {
 			if CooKie_115 == "" {
 				err := errors.New("你还没登陆，我猜你不知道需要先登陆")
