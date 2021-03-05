@@ -58,8 +58,9 @@ var ChooseFolder_115 []string //115 文件目录
 
 var NewVersion string //新版本提示
 
-func getcookie() {
+func loginAndGetcookie() {
 	// 尝试从本地cookie登录
+	var localCookie string
 	_, err := os.Stat("./cookies.txt") //os.Stat获取文件信息
 	if err == nil {
 
@@ -68,7 +69,7 @@ func getcookie() {
 			fmt.Println("读取cookies失败")
 
 		}
-		CooKie_115 = string(coo)
+		localCookie = string(coo)
 	}
 	dir, err := ioutil.TempDir("", "115sha1")
 	if err != nil {
@@ -130,8 +131,8 @@ func getcookie() {
 		network.Enable(),
 		// 尝试加载cookies
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			if CooKie_115 != "" {
-				cooArr := strings.Split(CooKie_115, ";")
+			if localCookie != "" {
+				cooArr := strings.Split(localCookie, ";")
 				for _, v := range cooArr {
 					//expr := cdp.TimeSinceEpoch(time.Now().Add(14 * 24 * time.Hour))
 					cooArrOfOne := strings.Split(v, "=")
@@ -151,11 +152,12 @@ func getcookie() {
 		chromedp.WaitVisible(`#js-top_search_text`, chromedp.ByID), //等待顶部搜索框加载完毕
 		chromedp.Navigate(`https://webapi.115.com/history/receive_list`),
 		chromedp.ActionFunc(func(taskCtx context.Context) error {
-			cookies, err := network.GetCookies().Do(taskCtx)
-			if err != nil {
-				return err
-			}
+
 			if CooKie_115 == "" { // 当没有cookie的时候才写入。已有Cookie就不管
+				cookies, err := network.GetCookies().Do(taskCtx)
+				if err != nil {
+					return err
+				}
 				for _, v := range cookies {
 					CooKie_115 = CooKie_115 + v.Name + "=" + v.Value + ";"
 				}
@@ -243,8 +245,7 @@ func inputBoxChoose() {
 			fd.Show()
 
 		}),
-		widget.NewLabel("导入1次后崩溃，请重新打开软件，下版本修复"),
-		widget.NewLabel("导入1次后崩溃，请重新打开软件，下版本修复"),
+
 		//开始导入
 		widget.NewButton("开始导入", func() {
 			if JsonData == "" {
@@ -479,18 +480,7 @@ func main() {
 	// 第一个按钮
 	w.SetContent(container.NewVBox(
 		hello,
-
-		// widget.NewLabel("版本号 2021年2月6日16:04:35"),
-		// widget.NewLabel(""),
-		widget.NewButton("1.登陆", func() {
-			// if CooKie_115 != "" {
-			// 	err := errors.New("你已经登陆了！！！ \r\n 再次登陆是为了锻炼身体吗？")
-			// 	dialog.ShowError(err, w)
-			// } else {
-			// 	getcookie()
-			// }
-			getcookie()
-		}),
+		widget.NewButton("1.登陆", func() { loginAndGetcookie() }),
 		widget.NewButton("2.导出", func() {
 			if CooKie_115 == "" {
 				err := errors.New("你还没登陆，我猜你不知道需要先登陆")
