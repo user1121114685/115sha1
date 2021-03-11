@@ -6,6 +6,8 @@ github.com/Kodeworks/golang-image-ico v0.0.0-20141118225523-73f0f4cfade9/go.mod 
 github.com/akavel/rsrc v0.8.0/go.mod h1:uLoCtb9J+EyAqh+26kdrTgmzRBFPGOolLWKpdxkKq+c=
 github.com/chromedp/cdproto v0.0.0-20210305224431-50b9f457e822 h1:iuUUtGk8vteAyrzYTdvn4gzVAw5Q7WEoDRinBQEiIe4=
 github.com/chromedp/cdproto v0.0.0-20210305224431-50b9f457e822/go.mod h1:At5TxYYdxkbQL0TSefRjhLE3Q0lgvqKKMSFUglJ7i1U=
+github.com/chromedp/cdproto v0.0.0-20210311013119-4e41b2544bc6 h1:Nbxi0akw7ZJDo4Zee9QvKyIeOsDgE3XHov+HaR5Dj9E=
+github.com/chromedp/cdproto v0.0.0-20210311013119-4e41b2544bc6/go.mod h1:At5TxYYdxkbQL0TSefRjhLE3Q0lgvqKKMSFUglJ7i1U=
 github.com/chromedp/chromedp v0.6.8 h1:hsMFAylK8PxqmpxzoxHkSJAV5qnixG0UJcNL70IRntg=
 github.com/chromedp/chromedp v0.6.8/go.mod h1:4NiJ4rKpkhU1Eor5stea0NvibADXd8drgtzj6+3eXZ4=
 github.com/chromedp/sysutil v1.0.0 h1:+ZxhTpfpZlmchB58ih/LBHX52ky7w2VhQVKQMucy3Ic=
@@ -23,8 +25,8 @@ github.com/fsnotify/fsnotify v1.4.9 h1:hsms1Qyu0jgnwNXIxa+/V/PDsU6CfLf6CNO8H7IWo
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
 github.com/fyne-io/mobile v0.1.2 h1:0HaXDtOOwyOTn3Umi0uKVCOgJtfX73c6unC4U8i5VZU=
 github.com/fyne-io/mobile v0.1.2/go.mod h1:/kOrWrZB6sasLbEy2JIvr4arEzQTXBTZGb3Y96yWbHY=
-github.com/gawwo/fake115-go v0.0.0-20210305115809-8c04044674a1 h1:SqTIlHhQk6audCsGnG19fn8+/UCp3gOgvUqzvd/YC9s=
-github.com/gawwo/fake115-go v0.0.0-20210305115809-8c04044674a1/go.mod h1:zb17UeGBBv+kB3ukJxrRwIagRekz2q1YuJHTxXhj9dA=
+github.com/gawwo/fake115-go v1.3.0 h1:KxewHm7SlVQnRTWBftH4miIZcoCjwAHnUpZpJO/MC9g=
+github.com/gawwo/fake115-go v1.3.0/go.mod h1:zb17UeGBBv+kB3ukJxrRwIagRekz2q1YuJHTxXhj9dA=
 github.com/go-gl/gl v0.0.0-20190320180904-bf2b1f2f34d7 h1:SCYMcCJ89LjRGwEa0tRluNRiMjZHalQZrVrvTbPh+qw=
 github.com/go-gl/gl v0.0.0-20190320180904-bf2b1f2f34d7/go.mod h1:482civXOzJJCPzJ4ZOX/pwvXBWSnzD4OKMdH4ClKGbk=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20200625191551-73d3c3675aa3 h1:q521PfSp5/z6/sD9FZZOWj4d1MLmfQW8PkRnI9M6PCE=

@@ -177,8 +177,9 @@ func loginAndGetcookie() {
 func choose115FolderName() {
 
 	client := &http.Client{}
-	urlstring := "https://webapi.115.com/files?aid=1&cid=" + MyFolderChoose + "&o=user_ptime&asc=0&offset=0&show_dir=1&limit=40&code=&scid=&snap=0&natsort=1&record_open_time=1&source=&format=json"
-	// https://webapi.115.com/files?aid=1&cid=    &o=user_ptime&asc=0&offset=0&show_dir=1&limit=40&code=&scid=&snap=0&natsort=1&record_open_time=1&source=&format=json
+	//urlstring := "https://webapi.115.com/files?aid=1&cid=" "&o=user_ptime&asc=0&offset=0&show_dir=1&limit=40&code=&scid=&snap=0&natsort=1&record_open_time=1&source=&format=json"
+	// https://webapi.115.com/files?aid=1&cid=          &o=user_ptime&asc=0&offset=0&show_dir=1&limit=40&code=&scid=&snap=0&natsort=1&record_open_time=1&source=&format=json
+	urlstring := "https://aps.115.com/natsort/files.php?aid=1&cid=" + MyFolderChoose + "&o=file_name&asc=1&offset=0&show_dir=1&limit=56&code=&scid=&snap=0&natsort=1&record_open_time=1&source=&format=json&fc_mix=0"
 	reqest, err := http.NewRequest("GET", urlstring, nil) //建立一个请求
 	if err != nil {
 		fmt.Println("Fatal error ", err.Error())
