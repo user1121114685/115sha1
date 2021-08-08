@@ -57,7 +57,7 @@ var CooKie_115 string         //115 Cookie
 var ChooseFolder_115 []string //115 文件目录
 
 var NewVersion string //新版本提示
-
+// go get github.com/gawwo/fake115-go@master
 func loginAndGetcookie() {
 	// 尝试从本地cookie登录
 	var localCookie string
@@ -192,7 +192,9 @@ func choose115FolderName() {
 	reqest.Header.Add("Cookie", CooKie_115)
 	reqest.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.146 Safari/537.36")
 	response, err := client.Do(reqest) //提交
-
+	if err != nil {
+		fmt.Printf(err.Error())
+	}
 	defer response.Body.Close()
 	body, err1 := ioutil.ReadAll(response.Body)
 	if err1 != nil {

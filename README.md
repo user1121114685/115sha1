@@ -29,6 +29,17 @@ https://github.com/getbuguai/gaihosts
 <!-- `go env -w GOARCH=386` -->
 `go build  -ldflags="-s -w -H windowsgui" main.go`
 
+```
+fyne package -os android -appID shaoxia.xyz.115sha1
+```
+
+
+
+## 尚未实现
+
+1. IOS 
+2. 多个json 选择
+
 ## License
 
 [The MIT License (MIT)](https://raw.githubusercontent.com/user1121114685/115sha1/master/LICENSE)
